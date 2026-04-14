@@ -7,6 +7,7 @@
 #include "email/EmailModule.h"
 #include "storage/CredentialStore.h"
 #include "voice/VoicePipeline.h"
+#include "wake/WakeWordManager.h"
 
 #include <string>
 
@@ -26,6 +27,7 @@ private:
     calendar::CalendarModule calendarModule_;
     storage::CredentialStore credentialStore_;
     voice::VoicePipeline voicePipeline_;
+    wake::WakeWordManager wakeManager_;
     ServiceOrchestrator orchestrator_;
 
     bool handleCommand(const std::string& command);
