@@ -7,6 +7,7 @@
 #include "email/EmailModule.h"
 #include "storage/CredentialStore.h"
 #include "voice/VoicePipeline.h"
+#include "wake/WakeWordClient.h"
 #include "wake/WakeWordManager.h"
 
 #include <string>
