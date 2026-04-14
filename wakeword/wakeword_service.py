@@ -31,10 +31,16 @@ from openwakeword.model import Model
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-WAKE_WORD = "hey_jarvis"  # openWakeWord model name closest to "atlas"
-# NOTE: openWakeWord ships with pre-trained models.  If a custom "atlas"
-# model has been trained and exported, replace the model name above or
-# pass `wakeword_models=["/path/to/atlas.onnx"]` to Model().
+WAKE_WORD = "hey_jarvis"  # Placeholder — openWakeWord does not ship a pre-trained "atlas" model.
+# To use a custom "atlas" wake word:
+#   1. Train or fine-tune an openWakeWord model for the word "atlas".
+#   2. Export it as an ONNX file (e.g., atlas.onnx).
+#   3. Replace the Model() call below with:
+#          Model(wakeword_models=["/path/to/atlas.onnx"])
+#   4. The dictionary key returned by predict() will then be "atlas".
+#
+# Until a custom model is trained, "hey_jarvis" is used as a functional
+# stand-in so the full pipeline can be tested end-to-end.
 CONFIDENCE_THRESHOLD = 0.5
 SAMPLE_RATE = 16000       # 16 kHz mono — required by openWakeWord
 CHANNELS = 1

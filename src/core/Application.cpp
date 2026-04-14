@@ -55,7 +55,9 @@ bool Application::handleCommand(const std::string& command) {
             std::cout << "Wake word detection is already active.\n";
         } else {
             wakeManager_.start();
-            std::cout << "Wake word detection started. Say \"atlas\" to activate.\n";
+            std::cout << "Wake word detection started. Say the wake word to activate.\n"
+                      << "(Note: configure wakeword/wakeword_service.py with a custom "
+                      << "\"atlas\" model for production use.)\n";
         }
         return true;
     }
