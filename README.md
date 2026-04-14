@@ -62,6 +62,33 @@ cmake --build build-qt
 ./build-qt/atlas_ui
 ```
 
+## Building a Windows EXE
+
+### Native build on Windows
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+```
+
+The executable is at `build/Release/atlas_assistant.exe`.
+
+### Cross-compile from Linux with MinGW
+
+Install the MinGW-w64 toolchain (e.g. `sudo apt install mingw-w64`), then:
+
+```bash
+cmake -S . -B build-win64 -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.cmake
+cmake --build build-win64
+```
+
+The executable is at `build-win64/atlas_assistant.exe`.
+
+### CI / GitHub Actions
+
+Every push to `main` automatically builds a Windows `.exe` via the
+**Build Windows EXE** workflow. Download the artifact from the Actions tab.
+
 ## Deployment Notes
 
 - **macOS**: install dependencies with Homebrew (`cmake`, `qt`, `portaudio`, `curl`, `sqlite`, `libical`), build with CMake.
