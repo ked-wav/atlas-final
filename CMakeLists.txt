@@ -16,9 +16,14 @@ add_library(atlas_core
     src/email/EmailModule.cpp
     src/storage/CredentialStore.cpp
     src/voice/VoicePipeline.cpp
+    src/wake/WakeWordClient.cpp
+    src/wake/WakeWordManager.cpp
 )
 
 target_include_directories(atlas_core PUBLIC include)
+
+find_package(Threads REQUIRED)
+target_link_libraries(atlas_core PUBLIC Threads::Threads)
 
 find_package(CURL QUIET)
 if(CURL_FOUND)

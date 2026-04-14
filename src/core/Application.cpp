@@ -11,7 +11,15 @@ Application::Application()
     : aiClient_(ai::AIModelClient::Backend::Ollama),
       emailModule_(aiClient_),
       voicePipeline_(aiClient_, notifier_),
-      orchestrator_(voicePipeline_, emailModule_, calendarModule_) {}
+      wakeManager_(),
+      orchestrator_(voicePipeline_, emailModule_, calendarModule_) {
+    // When the wake word is detected, automatically run a voice interaction turn.
+    wakeManager_.setCallback([this]() {
+        std::cout << "[Atlas] Wake word detected — starting voice turn\n";
+        const auto response = orchestrator_.handleVoiceTurn();
+        std::cout << "AI: " << response << '\n';
+    });
+}
 
 bool Application::handleCommand(const std::string& command) {
     if (command == "talk") {
@@ -42,16 +50,32 @@ bool Application::handleCommand(const std::string& command) {
         return true;
     }
 
+    if (command == "listen") {
+        if (wakeManager_.isRunning()) {
+            std::cout << "Wake word detection is already active.\n";
+        } else {
+            wakeManager_.start();
+            std::cout << "Wake word detection started. Say the wake word to activate.\n"
+                      << "(Note: configure wakeword/wakeword_service.py with a custom "
+                      << "\"atlas\" model for production use.)\n";
+        }
+        return true;
+    }
+
     if (command == "quit") {
         return false;
     }
 
-    std::cout << "Unknown command. Use: talk | email | calendar | quit\n";
+    std::cout << "Unknown command. Use: talk | email | calendar | listen | quit\n";
     return true;
 }
 
 int Application::run() {
-    std::cout << "Atlas Assistant started. Commands: talk, email, calendar, quit\n";
+    std::cout << "Atlas Assistant started. Commands: talk, email, calendar, listen, quit\n";
+
+    // Start wake word detection in the background.
+    wakeManager_.start();
+
     std::string command;
     bool keepRunning = true;
 
@@ -59,6 +83,7 @@ int Application::run() {
         keepRunning = handleCommand(command);
     }
 
+    wakeManager_.stop();
     return 0;
 }
 
