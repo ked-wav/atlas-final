@@ -45,6 +45,11 @@ target_include_directories(atlas_core PUBLIC include)
 find_package(Threads REQUIRED)
 target_link_libraries(atlas_core PUBLIC Threads::Threads)
 
+# Winsock2 for WakeWordClient TCP sockets on Windows
+if(WIN32)
+    target_link_libraries(atlas_core PUBLIC ws2_32)
+endif()
+
 find_package(CURL QUIET)
 if(CURL_FOUND)
     target_link_libraries(atlas_core PRIVATE CURL::libcurl)
