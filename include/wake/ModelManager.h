@@ -42,7 +42,6 @@ public:
     int scanAndLoad();
 
     /// Scan an arbitrary directory for .onnx files and load them.
-    /// Returns the number of models successfully loaded.
     void loadModelsFromDirectory(const std::string& path);
 
     /// Re-scan the models directory and load any new .onnx files that have

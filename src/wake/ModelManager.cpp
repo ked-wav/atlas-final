@@ -207,7 +207,15 @@ bool ModelManager::addModel(const std::string& filePath) {
 
 bool ModelManager::removeModel(const std::string& fileName) {
     const fs::path target = fs::path(modelsDir_) / fileName;
-    const std::string canonical = fs::weakly_canonical(target).string();
+
+    std::string canonical;
+    try {
+        canonical = fs::weakly_canonical(target).string();
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "[ModelManager] Cannot resolve path for " << fileName
+                  << ": " << e.what() << '\n';
+        canonical = target.string();
+    }
 
     // Unload from engine.
     engine_.removeModel(canonical);
@@ -297,7 +305,11 @@ bool ModelManager::isWatching() const noexcept {
 void ModelManager::watchLoop() {
     while (watching_.load()) {
         // Sleep in small increments so we can exit quickly when stopped.
-        for (int i = 0; i < watchIntervalSec_ * 10 && watching_.load(); ++i) {
+        const int iterations = watchIntervalSec_ * 10;
+        for (int i = 0; i < iterations; ++i) {
+            if (!watching_.load()) {
+                return;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
