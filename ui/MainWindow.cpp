@@ -26,6 +26,30 @@
 namespace atlas::ui {
 
 // ---------------------------------------------------------------------------
+// Shared drop-hint stylesheets (avoids duplication across event handlers)
+// ---------------------------------------------------------------------------
+
+static const char* kDropHintNormal =
+    "QLabel {"
+    "  background-color: #1E1E2E;"
+    "  color: #A9DFBF;"
+    "  font-size: 16px;"
+    "  padding: 24px;"
+    "  border: 2px dashed #58D68D;"
+    "  border-radius: 8px;"
+    "}";
+
+static const char* kDropHintActive =
+    "QLabel {"
+    "  background-color: #2E4E3E;"
+    "  color: #58D68D;"
+    "  font-size: 16px;"
+    "  padding: 24px;"
+    "  border: 2px solid #58D68D;"
+    "  border-radius: 8px;"
+    "}";
+
+// ---------------------------------------------------------------------------
 // Construction / destruction
 // ---------------------------------------------------------------------------
 
@@ -57,15 +81,7 @@ void MainWindow::setupUi() {
     dropHint_ = new QLabel(
         "Drag and drop .onnx wake word model files here", central);
     dropHint_->setAlignment(Qt::AlignCenter);
-    dropHint_->setStyleSheet(
-        "QLabel {"
-        "  background-color: #1E1E2E;"
-        "  color: #A9DFBF;"
-        "  font-size: 16px;"
-        "  padding: 24px;"
-        "  border: 2px dashed #58D68D;"
-        "  border-radius: 8px;"
-        "}");
+    dropHint_->setStyleSheet(kDropHintNormal);
     layout->addWidget(dropHint_);
 
     // Model list.
@@ -128,15 +144,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
         for (const QUrl& url : event->mimeData()->urls()) {
             if (url.toLocalFile().endsWith(".onnx", Qt::CaseInsensitive)) {
                 event->acceptProposedAction();
-                dropHint_->setStyleSheet(
-                    "QLabel {"
-                    "  background-color: #2E4E3E;"
-                    "  color: #58D68D;"
-                    "  font-size: 16px;"
-                    "  padding: 24px;"
-                    "  border: 2px solid #58D68D;"
-                    "  border-radius: 8px;"
-                    "}");
+                dropHint_->setStyleSheet(kDropHintActive);
                 return;
             }
         }
@@ -145,15 +153,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
 
 void MainWindow::dragLeaveEvent(QDragLeaveEvent* /*event*/) {
     // Restore normal drop hint styling when the drag leaves the window.
-    dropHint_->setStyleSheet(
-        "QLabel {"
-        "  background-color: #1E1E2E;"
-        "  color: #A9DFBF;"
-        "  font-size: 16px;"
-        "  padding: 24px;"
-        "  border: 2px dashed #58D68D;"
-        "  border-radius: 8px;"
-        "}");
+    dropHint_->setStyleSheet(kDropHintNormal);
 }
 
 void MainWindow::dragMoveEvent(QDragMoveEvent* event) {
@@ -164,15 +164,7 @@ void MainWindow::dragMoveEvent(QDragMoveEvent* event) {
 
 void MainWindow::dropEvent(QDropEvent* event) {
     // Restore normal drop hint styling.
-    dropHint_->setStyleSheet(
-        "QLabel {"
-        "  background-color: #1E1E2E;"
-        "  color: #A9DFBF;"
-        "  font-size: 16px;"
-        "  padding: 24px;"
-        "  border: 2px dashed #58D68D;"
-        "  border-radius: 8px;"
-        "}");
+    dropHint_->setStyleSheet(kDropHintNormal);
 
     if (!event->mimeData()->hasUrls()) {
         return;
