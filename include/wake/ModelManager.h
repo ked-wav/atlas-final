@@ -102,6 +102,12 @@ private:
     /// Returns true if the model was loaded (or was already loaded).
     bool tryLoad(const std::string& canonicalPath);
 
+    /// Detect models whose files have been removed from disk and unload them.
+    void detectRemovedModels();
+
+    /// Check that a file is non-empty and not still being written (stable).
+    static bool isFileStable(const std::string& path);
+
     /// Entry point for the background watcher thread.
     void watchLoop();
 };
