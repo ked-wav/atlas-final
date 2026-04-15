@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 
 // ---------------------------------------------------------------------------
@@ -66,6 +67,31 @@ bool OnnxWakeModel::loadModel(const std::string& path) {
     if (impl_->loaded) {
         std::cerr << "[OnnxWakeModel] Model already loaded (" << impl_->path << ")\n";
         return false;
+    }
+
+    // Basic file validation before attempting ONNX Runtime load.
+    {
+        std::ifstream probe(path, std::ios::binary);
+        if (!probe.is_open()) {
+            std::cerr << "[OnnxWakeModel] Cannot open file: " << path << '\n';
+            return false;
+        }
+
+        // ONNX files are protobuf-encoded.  The first byte of a valid protobuf
+        // message is a field tag.  For ONNX ModelProto field 1 (ir_version,
+        // varint) the tag byte is 0x08.  Reject obviously non-ONNX files early.
+        unsigned char header = 0;
+        if (!probe.read(reinterpret_cast<char*>(&header), 1)) {
+            std::cerr << "[OnnxWakeModel] File is empty: " << path << '\n';
+            return false;
+        }
+        if (header != 0x08) {
+            std::cerr << "[OnnxWakeModel] File does not appear to be a valid "
+                         "ONNX model (bad header byte 0x"
+                      << std::hex << static_cast<int>(header) << std::dec
+                      << "): " << path << '\n';
+            return false;
+        }
     }
 
 #ifdef ATLAS_HAS_ONNXRUNTIME

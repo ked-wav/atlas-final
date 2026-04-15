@@ -29,12 +29,24 @@
                          | Secure credential   |
                          | wrapper + SQLite    |
                          +---------------------+
+
++---------------------------------------------------+
+| Wake Word Detection (ONNX Runtime)                |
+|                                                   |
+|  MicStream --> WakeWordEngine --> wake callback    |
+|                    ^                              |
+|                    |                              |
+|              ModelManager                         |
+|         (scans models/wakewords/)                 |
++---------------------------------------------------+
 ```
 
 ## Project Layout
 
 - `src/main.cpp` – application entry point
-- `include` + `src` – core/voice/ai/email/calendar/storage/audio modules
+- `include` + `src` – core/voice/ai/email/calendar/storage/audio/wake modules
+- `models/wakewords/` – drop `.onnx` wake word models here
+- `wakeword/` – legacy Python wake word service (deprecated; see C++ engine)
 - `qml/Main.qml` – Qt UI screens and accessibility-oriented layout
 - `CMakeLists.txt` – modular CMake build
 
@@ -95,6 +107,61 @@ Every push to `main` automatically builds a Windows `.exe` via the
 - **Windows**: install Qt + CMake + vcpkg packages (`curl`, `sqlite3`, `portaudio`, `libical`) and build with MSVC.
 - **Android (Qt)**: build Qt Quick target with Android kit; ensure runtime microphone permission and network permission.
 - **iOS (Qt)**: build Qt Quick target with iOS kit; configure microphone usage string and secure credential storage with Keychain.
+
+## Custom Wake Words (ONNX Runtime)
+
+Atlas supports custom wake word detection using ONNX models. Drop `.onnx`
+wake word model files into the `models/wakewords/` directory and the
+assistant will automatically load and use them — no recompilation required.
+
+### Quick Start
+
+1. Train or obtain an ONNX wake word model (e.g. via
+   [openWakeWord](https://github.com/dscripka/openWakeWord)).
+2. Place the `.onnx` file in `models/wakewords/`:
+   ```
+   models/
+     wakewords/
+       atlas.onnx
+       custom1.onnx
+   ```
+3. Start the assistant. Models are loaded automatically on startup.
+4. New models dropped into the directory while the app is running are
+   detected within a few seconds (background polling). Deleted model files
+   are automatically unloaded.
+
+### Enabling ONNX Runtime
+
+By default, the project compiles without ONNX Runtime and wake word
+inference is a no-op. To enable real inference:
+
+```bash
+# Download ONNX Runtime for your platform, then:
+cmake -S . -B build -DONNXRUNTIME_ROOT=/path/to/onnxruntime-linux-x64-<version>
+cmake --build build
+```
+
+### Architecture
+
+| Component | File | Role |
+|---|---|---|
+| `OnnxWakeModel` | `include/wake/OnnxWakeModel.h` | Loads a single `.onnx` model and runs inference on audio frames |
+| `WakeWordEngine` | `include/wake/WakeWordEngine.h` | Manages multiple models, runs inference, fires callbacks on detection |
+| `ModelManager` | `include/wake/ModelManager.h` | Scans `models/wakewords/`, hot-loads new models, removes deleted ones |
+| `WakeWordManager` | `include/wake/WakeWordManager.h` | High-level controller that wires mic → engine → callback |
+| `MicStream` | `include/audio/MicStream.h` | Captures 16 kHz mono float32 audio and feeds frames to the engine |
+
+### CLI Commands
+
+- `listen` — start wake word detection (also starts automatically on `run`)
+- `talk` — manually trigger a voice interaction turn
+
+### Legacy Python Service
+
+The `wakeword/wakeword_service.py` script is a fallback that uses
+openWakeWord via Python and communicates over TCP. The C++ ONNX engine
+replaces this entirely. See `WakeWordClient` for the TCP client that
+connects to the legacy service.
 
 ## Notes
 

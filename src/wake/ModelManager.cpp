@@ -19,6 +19,15 @@ namespace fs = std::filesystem;
 
 namespace atlas::wake {
 
+namespace {
+/// Minimum age of a file before it is considered stable and safe to load.
+/// Files modified more recently than this may still be in the process of
+/// being written (e.g. a drag-and-drop copy).  Two seconds is long enough
+/// to cover typical file-system flush/sync delays while being short enough
+/// that newly dropped models appear promptly.
+constexpr int kFileStabilityThresholdSec = 2;
+} // namespace
+
 // ---------------------------------------------------------------------------
 // Construction / destruction
 // ---------------------------------------------------------------------------
@@ -63,12 +72,71 @@ bool ModelManager::tryLoad(const std::string& canonicalPath) {
         }
     }
 
+    // Guard against loading incomplete or in-progress file copies.
+    if (!isFileStable(canonicalPath)) {
+        return false;
+    }
+
     if (engine_.addModel(canonicalPath)) {
         std::lock_guard<std::mutex> lock(loadedMutex_);
         loadedPaths_.insert(canonicalPath);
         return true;
     }
     return false;
+}
+
+// ---------------------------------------------------------------------------
+// isFileStable — reject empty or very recently modified files
+// ---------------------------------------------------------------------------
+
+bool ModelManager::isFileStable(const std::string& path) {
+    try {
+        const auto size = fs::file_size(path);
+        if (size == 0) {
+            return false;
+        }
+
+        // If the file was modified very recently it may still be in the
+        // process of being written — skip it and pick it up on the next
+        // refresh cycle.
+        const auto lastWrite = fs::last_write_time(path);
+        const auto now = fs::file_time_type::clock::now();
+        const auto age = std::chrono::duration_cast<std::chrono::seconds>(
+            now - lastWrite);
+        if (age.count() < kFileStabilityThresholdSec) {
+            return false;
+        }
+
+        return true;
+    } catch (const fs::filesystem_error&) {
+        return false;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// detectRemovedModels — unload models whose files have been deleted
+// ---------------------------------------------------------------------------
+
+void ModelManager::detectRemovedModels() {
+    std::vector<std::string> toRemove;
+
+    {
+        std::lock_guard<std::mutex> lock(loadedMutex_);
+        for (const auto& p : loadedPaths_) {
+            if (!fs::exists(p)) {
+                toRemove.push_back(p);
+            }
+        }
+    }
+
+    for (const auto& p : toRemove) {
+        engine_.removeModel(p);
+        {
+            std::lock_guard<std::mutex> lock(loadedMutex_);
+            loadedPaths_.erase(p);
+        }
+        std::cout << "[ModelManager] Auto-removed deleted model: " << p << '\n';
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -146,6 +214,10 @@ void ModelManager::refreshModels() {
         return;
     }
 
+    // First, detect and unload any models whose files have been removed.
+    detectRemovedModels();
+
+    // Then scan for new .onnx files.
     try {
         for (const auto& entry : fs::directory_iterator(modelsDir_)) {
             if (!entry.is_regular_file()) {
