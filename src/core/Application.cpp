@@ -11,13 +11,22 @@ Application::Application()
     : aiClient_(ai::AIModelClient::Backend::Ollama),
       emailModule_(aiClient_),
       voicePipeline_(aiClient_, notifier_),
+      voiceManager_(aiClient_, notifier_),
       wakeManager_(),
       orchestrator_(voicePipeline_, emailModule_, calendarModule_) {
     // When the wake word is detected, automatically run a voice interaction turn.
     wakeManager_.setCallback([this]() {
         std::cout << "[Atlas] Wake word detected — starting voice turn\n";
-        const auto response = orchestrator_.handleVoiceTurn();
+        const auto response = voiceManager_.runSingleTurn();
         std::cout << "AI: " << response << '\n';
+    });
+
+    // Wire voice interaction callbacks for logging.
+    voiceManager_.setTranscriptCallback([](const std::string& text) {
+        std::cout << "You said: " << text << '\n';
+    });
+    voiceManager_.setResponseCallback([](const std::string& text) {
+        std::cout << "AI: " << text << '\n';
     });
 }
 
@@ -25,6 +34,24 @@ bool Application::handleCommand(const std::string& command) {
     if (command == "talk") {
         const auto response = orchestrator_.handleVoiceTurn();
         std::cout << "AI: " << response << '\n';
+        return true;
+    }
+
+    if (command == "voice") {
+        std::cout << "Starting real-time voice interaction…\n";
+        const auto response = voiceManager_.runSingleTurn();
+        std::cout << "AI: " << response << '\n';
+        return true;
+    }
+
+    if (command == "voice-continuous") {
+        if (voiceManager_.isActive()) {
+            std::cout << "Stopping continuous voice interaction.\n";
+            voiceManager_.stop();
+        } else {
+            std::cout << "Starting continuous voice interaction.\n";
+            voiceManager_.startContinuous();
+        }
         return true;
     }
 
@@ -62,15 +89,16 @@ bool Application::handleCommand(const std::string& command) {
     }
 
     if (command == "quit") {
+        voiceManager_.stop();
         return false;
     }
 
-    std::cout << "Unknown command. Use: talk | email | calendar | listen | quit\n";
+    std::cout << "Unknown command. Use: talk | voice | voice-continuous | email | calendar | listen | quit\n";
     return true;
 }
 
 int Application::run() {
-    std::cout << "Atlas Assistant started. Commands: talk, email, calendar, listen, quit\n";
+    std::cout << "Atlas Assistant started. Commands: talk, voice, voice-continuous, email, calendar, listen, quit\n";
 
     wakeManager_.start();
 

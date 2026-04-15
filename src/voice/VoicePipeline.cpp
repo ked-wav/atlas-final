@@ -2,6 +2,8 @@
 
 #include "ai/AIModelClient.h"
 #include "audio/VoiceNotifier.h"
+#include "audio/SpeechDetector.h"
+#include "audio/WhisperTranscriber.h"
 
 #include <cmath>
 
@@ -12,7 +14,7 @@ VoicePipeline::VoicePipeline(ai::AIModelClient& aiClient, audio::VoiceNotifier& 
 
 std::vector<float> VoicePipeline::recordMicrophoneAudio() const {
     // PortAudio integration should capture live microphone samples.
-    // Mobile microphone permissions differ across Qt platforms and need runtime handling.
+    // For real-time capture use VoiceInteractionManager which uses MicRecorder.
     std::vector<float> synthetic(16000);
     for (std::size_t i = 0; i < synthetic.size(); ++i) {
         synthetic[i] = 0.2f * std::sin(static_cast<float>(i) * 0.02f);
@@ -21,7 +23,8 @@ std::vector<float> VoicePipeline::recordMicrophoneAudio() const {
 }
 
 std::vector<SpeechSegment> VoicePipeline::detectSpeechSegments(const std::vector<float>& audioBuffer) const {
-    // Silero VAD threshold tuning is required per microphone/environment profile.
+    // For real VAD use the SpeechDetector class which provides energy-based
+    // detection with pre-speech buffering and configurable thresholds.
     if (audioBuffer.empty()) {
         return {};
     }
@@ -29,9 +32,10 @@ std::vector<SpeechSegment> VoicePipeline::detectSpeechSegments(const std::vector
 }
 
 std::string VoicePipeline::transcribe(const SpeechSegment& segment) const {
-    (void)segment;
-    // whisper.cpp integration point. Quantized models reduce latency on edge devices.
-    return "Summarize my latest emails and next calendar event.";
+    // For real transcription use WhisperTranscriber with a loaded model.
+    // This placeholder keeps the smoke test working without whisper.cpp.
+    audio::WhisperTranscriber transcriber;
+    return transcriber.transcribe(segment.samples);
 }
 
 void VoicePipeline::playResponse(const std::string& response) const {

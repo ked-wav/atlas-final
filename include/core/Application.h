@@ -6,6 +6,7 @@
 #include "core/ServiceOrchestrator.h"
 #include "email/EmailModule.h"
 #include "storage/CredentialStore.h"
+#include "voice/VoiceInteractionManager.h"
 #include "voice/VoicePipeline.h"
 #include "wake/WakeWordManager.h"
 
@@ -27,6 +28,7 @@ private:
     calendar::CalendarModule calendarModule_;
     storage::CredentialStore credentialStore_;
     voice::VoicePipeline voicePipeline_;
+    voice::VoiceInteractionManager voiceManager_;
     wake::WakeWordManager wakeManager_;
     ServiceOrchestrator orchestrator_;
 
