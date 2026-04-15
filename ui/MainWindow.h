@@ -21,6 +21,10 @@
 #include <QMainWindow>
 #include <QString>
 
+namespace atlas::ui {
+class AssistantWidget;
+} // namespace atlas::ui
+
 // Forward declarations — we don't want wake/ headers in the UI header when
 // the consumer doesn't need them.
 namespace atlas::wake {
@@ -64,6 +68,7 @@ private:
     QListWidget* modelList_{nullptr};
     QLabel* statusLabel_{nullptr};
     QLabel* dropHint_{nullptr};
+    atlas::ui::AssistantWidget* assistantWidget_{nullptr};
 
     void setupUi();
 };

@@ -107,6 +107,8 @@ if(BUILD_QT_UI)
         src/qt_main.cpp
         ui/MainWindow.cpp
         ui/MainWindow.h
+        ui/AssistantWidget.cpp
+        ui/AssistantWidget.h
     )
     qt_add_qml_module(atlas_ui
         URI AtlasUI
