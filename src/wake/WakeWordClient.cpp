@@ -5,11 +5,21 @@
 #include <cstring>
 #include <iostream>
 
-// POSIX socket headers
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#ifdef _WIN32
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+   using socket_t  = SOCKET;
+   static const socket_t kInvalidSocket = INVALID_SOCKET;
+   static void closeSocket(socket_t s) { ::closesocket(s); }
+#else
+#  include <arpa/inet.h>
+#  include <netinet/in.h>
+#  include <sys/socket.h>
+#  include <unistd.h>
+   using socket_t = int;
+   static const socket_t kInvalidSocket = -1;
+   static void closeSocket(socket_t s) { ::close(s); }
+#endif
 
 namespace atlas::wake {
 
@@ -56,8 +66,8 @@ bool WakeWordClient::isRunning() const {
 // ---------------------------------------------------------------------------
 
 int WakeWordClient::tryConnect() const {
-    int fd = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) {
+    socket_t fd = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (fd == kInvalidSocket) {
         return -1;
     }
 
@@ -66,23 +76,29 @@ int WakeWordClient::tryConnect() const {
     addr.sin_port = htons(static_cast<uint16_t>(port_));
 
     if (::inet_pton(AF_INET, host_.c_str(), &addr.sin_addr) <= 0) {
-        ::close(fd);
+        closeSocket(fd);
         return -1;
     }
 
     // Use a non-blocking connect with a short timeout so that the listener
     // loop can check the running_ flag regularly.
+#ifdef _WIN32
+    DWORD timeout = 2000; // milliseconds
+    ::setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO,
+                 reinterpret_cast<const char*>(&timeout), sizeof(timeout));
+#else
     struct timeval tv {};
     tv.tv_sec = 2;
     tv.tv_usec = 0;
     ::setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+#endif
 
     if (::connect(fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
-        ::close(fd);
+        closeSocket(fd);
         return -1;
     }
 
-    return fd;
+    return static_cast<int>(fd);
 }
 
 // ---------------------------------------------------------------------------
@@ -92,6 +108,15 @@ int WakeWordClient::tryConnect() const {
 void WakeWordClient::listenerLoop() {
     constexpr int kReconnectDelaySec = 2;
     constexpr std::size_t kBufSize = 256;
+
+#ifdef _WIN32
+    // Initialise Winsock once for this thread's lifetime.
+    WSADATA wsaData;
+    if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::cerr << "[WakeWordClient] WSAStartup failed\n";
+        return;
+    }
+#endif
 
     while (running_.load()) {
         // ----- Connect (with auto-reconnect) -----
@@ -115,16 +140,25 @@ void WakeWordClient::listenerLoop() {
         // extract complete newline-terminated messages.
         std::string lineBuf;
         char raw[kBufSize];
+        socket_t sock = static_cast<socket_t>(fd);
 
         while (running_.load()) {
-            ssize_t n = ::recv(fd, raw, kBufSize, 0);
+            int n = ::recv(sock, raw, static_cast<int>(kBufSize), 0);
 
             if (n < 0) {
+#ifdef _WIN32
+                int err = ::WSAGetLastError();
+                if (err == WSAETIMEDOUT) {
+                    continue;  // Receive timeout — just loop and check running_.
+                }
+                std::cerr << "[WakeWordClient] recv error: " << err << "\n";
+#else
                 if (errno == EAGAIN || errno == EWOULDBLOCK) {
                     // Receive timeout — just loop and check running_.
                     continue;
                 }
                 std::cerr << "[WakeWordClient] recv error: " << std::strerror(errno) << "\n";
+#endif
                 break;  // reconnect
             }
 
@@ -156,7 +190,7 @@ void WakeWordClient::listenerLoop() {
             }
         }
 
-        ::close(fd);
+        closeSocket(sock);
 
         // Brief pause before reconnecting.
         if (running_.load()) {
@@ -167,6 +201,10 @@ void WakeWordClient::listenerLoop() {
             }
         }
     }
+
+#ifdef _WIN32
+    ::WSACleanup();
+#endif
 }
 
 } // namespace atlas::wake
