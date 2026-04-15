@@ -56,7 +56,7 @@ bool Application::handleCommand(const std::string& command) {
         } else {
             wakeManager_.start();
             std::cout << "Wake word detection started.\n"
-                      << "Drop .onnx wake word models into ./models/ to add them.\n";
+                      << "Drop .onnx wake word models into ./models/wakewords/ to add them.\n";
         }
         return true;
     }
