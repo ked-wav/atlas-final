@@ -30,7 +30,7 @@ bool PiperSynthesizer::loadVoice(const std::string& modelPath,
     // piper_init(), piper_load_voice(), etc.
     (void)configPath;
     modelPath_  = modelPath;
-    sampleRate_ = 22050;  // Piper voices typically output 22050 Hz
+    sampleRate_ = 22050;  // Default Piper output rate; should be read from model config in production.
     loaded_     = true;
     std::cout << "[PiperSynthesizer] Voice loaded: " << modelPath << '\n';
     return true;

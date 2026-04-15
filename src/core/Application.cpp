@@ -93,7 +93,8 @@ bool Application::handleCommand(const std::string& command) {
         return false;
     }
 
-    std::cout << "Unknown command. Use: talk | voice | voice-continuous | email | calendar | listen | quit\n";
+    std::cout << "Unknown command. Use: talk | voice | voice-continuous | "
+                 "email | calendar | listen | quit\n";
     return true;
 }
 

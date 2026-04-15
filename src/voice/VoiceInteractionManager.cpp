@@ -255,7 +255,7 @@ void VoiceInteractionManager::continuousLoop() {
         utteranceReady_ = false;
         setState(State::Listening);
 
-        const std::string result = processOneTurn(30000);  // 30s timeout
+        const std::string result = processOneTurn(30000);  // 30s per-turn timeout
 
         if (!active_.load()) {
             break;
@@ -266,7 +266,9 @@ void VoiceInteractionManager::continuousLoop() {
         }
 
         // Brief pause before listening again to avoid echo pickup.
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        static constexpr int kPostResponseDelayMs = 500;
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(kPostResponseDelayMs));
     }
 }
 

@@ -86,6 +86,9 @@ std::string WhisperTranscriber::transcribe(const float* samples,
 
     struct whisper_full_params params =
         whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    // Note: params.language points to language_.c_str(). The whisper_full()
+    // call copies the string internally, so this is safe as long as language_
+    // is not modified concurrently (the method is const).
     params.language  = language_.c_str();
     params.n_threads = threads_;
     params.print_progress   = false;
