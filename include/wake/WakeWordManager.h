@@ -3,8 +3,9 @@
 // ---------------------------------------------------------------------------
 // WakeWordManager — high-level controller for wake-word detection
 // ---------------------------------------------------------------------------
-// Owns a WakeWordClient (TCP fallback) and adds debouncing / duplicate
-// activation protection.  Application code interacts only with this class.
+// Owns a WakeWordEngine, ModelManager, and MicStream.  Replaces the old TCP
+// client approach with fully in-process ONNX inference.  Application code
+// interacts only with this class.
 //
 // Usage:
 //     atlas::wake::WakeWordManager wakeManager;
@@ -12,10 +13,16 @@
 //     wakeManager.start();
 //     // … run main loop …
 //     wakeManager.stop();
+//
+// The manager also exposes the underlying engine and model manager so that
+// higher-level code (e.g. drag-and-drop UI) can add models at runtime.
 // ---------------------------------------------------------------------------
 
+#include "wake/ModelManager.h"
+#include "wake/WakeWordEngine.h"
+#include "audio/MicStream.h"
+
 #include <atomic>
-#include <chrono>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -23,14 +30,11 @@
 
 namespace atlas::wake {
 
-// Forward declaration — implementation detail.
-class WakeWordClient;
-
 class WakeWordManager {
 public:
     /// Construct the manager.
-    /// \p host / \p port specify the Python wake-word service address.
-    explicit WakeWordManager(const std::string& host = "127.0.0.1", int port = 5055);
+    /// \p modelsDir  Directory to scan for .onnx models on startup.
+    explicit WakeWordManager(const std::string& modelsDir = "./models");
 
     ~WakeWordManager();
 
@@ -38,10 +42,10 @@ public:
     WakeWordManager(const WakeWordManager&) = delete;
     WakeWordManager& operator=(const WakeWordManager&) = delete;
 
-    /// Set the callback invoked when the wake word is detected (debounced).
+    /// Set the callback invoked when any wake word is detected.
     void setCallback(std::function<void()> callback);
 
-    /// Start listening for wake-word events.
+    /// Start listening: load models, open mic stream, begin inference.
     void start();
 
     /// Stop listening and release resources.
@@ -53,19 +57,21 @@ public:
     /// Query whether the manager is currently active.
     bool isRunning() const;
 
+    /// Access the underlying engine (e.g. for UI integration).
+    WakeWordEngine& engine();
+
+    /// Access the model manager (e.g. for drag-and-drop file handling).
+    ModelManager& modelManager();
+
 private:
-    std::unique_ptr<WakeWordClient> client_;
+    WakeWordEngine engine_;
+    ModelManager modelManager_;
+    audio::MicStream micStream_;
+
+    std::atomic<bool> running_{false};
 
     std::function<void()> userCallback_;
     std::mutex callbackMutex_;
-
-    /// Debounce tracking.
-    std::atomic<int> debouncePeriodMs_{2000};  // 2 s default
-    std::chrono::steady_clock::time_point lastTrigger_;
-    std::mutex triggerMutex_;
-
-    /// Called by the WakeWordClient on every raw "WAKE" message.
-    void onRawWake();
 };
 
 } // namespace atlas::wake
