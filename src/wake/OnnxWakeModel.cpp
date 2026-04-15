@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <iostream>
 
 // ---------------------------------------------------------------------------
@@ -104,14 +105,8 @@ bool OnnxWakeModel::loadModel(const std::string& path) {
 
         impl_->path = path;
 
-        // Derive a human-readable name from the file path.
-        auto pos = path.find_last_of("/\\");
-        std::string fileName = (pos != std::string::npos) ? path.substr(pos + 1) : path;
-        // Strip .onnx extension.
-        if (fileName.size() > 5 && fileName.substr(fileName.size() - 5) == ".onnx") {
-            fileName = fileName.substr(0, fileName.size() - 5);
-        }
-        impl_->name = fileName;
+        // Derive a human-readable name from the file path using std::filesystem.
+        impl_->name = std::filesystem::path(path).stem().string();
         impl_->loaded = true;
 
         std::cout << "[OnnxWakeModel] Loaded model '" << impl_->name
@@ -133,12 +128,7 @@ bool OnnxWakeModel::loadModel(const std::string& path) {
     // application can function (e.g. UI model list).  Inference will return 0.
     impl_->path = path;
 
-    auto pos = path.find_last_of("/\\");
-    std::string fileName = (pos != std::string::npos) ? path.substr(pos + 1) : path;
-    if (fileName.size() > 5 && fileName.substr(fileName.size() - 5) == ".onnx") {
-        fileName = fileName.substr(0, fileName.size() - 5);
-    }
-    impl_->name = fileName;
+    impl_->name = std::filesystem::path(path).stem().string();
     impl_->loaded = true;
 
     std::cout << "[OnnxWakeModel] Loaded model stub '" << impl_->name

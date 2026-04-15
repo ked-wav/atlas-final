@@ -21,7 +21,7 @@ option(BUILD_QT_UI "Build Qt/QML UI application" OFF)
 # When ONNX Runtime is not found the project still compiles — inference
 # calls return 0 and the wake word engine is effectively a no-op.
 # ---------------------------------------------------------------------------
-option(ONNXRUNTIME_ROOT "Path to ONNX Runtime installation" "")
+set(ONNXRUNTIME_ROOT "" CACHE PATH "Path to ONNX Runtime installation")
 
 add_library(atlas_core
     src/ai/AIModelClient.cpp

@@ -101,7 +101,8 @@ bool ModelManager::addModel(const std::string& filePath) {
         const fs::path dst = fs::path(modelsDir_) / src.filename();
 
         // Copy the file if it isn't already in the managed directory.
-        if (fs::canonical(src.parent_path()) != fs::canonical(modelsDir_)) {
+        // Use weakly_canonical to avoid throwing when paths don't exist yet.
+        if (fs::weakly_canonical(src.parent_path()) != fs::weakly_canonical(modelsDir_)) {
             fs::copy_file(src, dst, fs::copy_options::overwrite_existing);
             std::cout << "[ModelManager] Copied " << src.filename().string()
                       << " into " << modelsDir_ << '\n';

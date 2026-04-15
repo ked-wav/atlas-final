@@ -22,11 +22,16 @@ namespace atlas::audio {
 // Construction / destruction
 // ---------------------------------------------------------------------------
 
+namespace {
+/// Number of seconds of audio the circular buffer can hold.
+/// Sized to absorb short processing stalls without dropping audio.
+constexpr int kBufferDurationSeconds = 4;
+} // namespace
+
 MicStream::MicStream(std::size_t frameSize, int sampleRate)
     : frameSize_(frameSize),
       sampleRate_(sampleRate),
-      // Ring buffer holds ~4 seconds of audio.
-      ringBuffer_(static_cast<std::size_t>(sampleRate) * 4, 0.0f) {}
+      ringBuffer_(static_cast<std::size_t>(sampleRate) * kBufferDurationSeconds, 0.0f) {}
 
 MicStream::~MicStream() {
     stop();

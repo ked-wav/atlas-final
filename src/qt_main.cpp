@@ -26,9 +26,9 @@ int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
 #endif
 
-    QQmlApplicationEngine engine_qml;
-    engine_qml.loadFromModule("AtlasUI", "Main");
-    if (engine_qml.rootObjects().isEmpty()) {
+    QQmlApplicationEngine qmlEngine;
+    qmlEngine.loadFromModule("AtlasUI", "Main");
+    if (qmlEngine.rootObjects().isEmpty()) {
         return -1;
     }
 
