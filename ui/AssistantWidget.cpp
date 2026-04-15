@@ -248,7 +248,7 @@ void AssistantWidget::drawProcessingCircle(QPainter& p, const QPointF& centre,
     // Spinning arc
     const double arcR = radius * 1.25;
     QRectF arcRect(centre.x() - arcR, centre.y() - arcR, arcR * 2, arcR * 2);
-    int startAngle = static_cast<int>(t * 200) % 360 * 16;
+    int startAngle = (static_cast<int>(t * 200) % 360) * 16;
     QPen arcPen(coreColor_, 2.5, Qt::SolidLine, Qt::RoundCap);
     p.setPen(arcPen);
     p.setBrush(Qt::NoBrush);
