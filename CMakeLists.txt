@@ -33,6 +33,7 @@ add_library(atlas_core
     src/email/EmailModule.cpp
     src/storage/CredentialStore.cpp
     src/voice/VoicePipeline.cpp
+    src/voice/piper_tts.cpp
     src/wake/OnnxWakeModel.cpp
     src/wake/WakeWordEngine.cpp
     src/wake/WakeWordClient.cpp
@@ -100,7 +101,7 @@ enable_testing()
 add_test(NAME atlas_smoke_run COMMAND atlas_assistant --smoke-test)
 
 if(BUILD_QT_UI)
-    find_package(Qt6 6.4 COMPONENTS Quick Widgets REQUIRED)
+    find_package(Qt6 6.4 COMPONENTS Quick Widgets Network REQUIRED)
     qt_standard_project_setup(REQUIRES 6.4)
 
     qt_add_executable(atlas_ui
@@ -109,6 +110,8 @@ if(BUILD_QT_UI)
         ui/MainWindow.h
         ui/AssistantWidget.cpp
         ui/AssistantWidget.h
+        ui/assistant_ui.cpp
+        ui/assistant_ui.h
     )
     qt_add_qml_module(atlas_ui
         URI AtlasUI
@@ -120,5 +123,5 @@ if(BUILD_QT_UI)
         ${CMAKE_SOURCE_DIR}/ui
     )
     target_compile_definitions(atlas_ui PRIVATE BUILD_QT_WIDGETS_UI=1)
-    target_link_libraries(atlas_ui PRIVATE Qt6::Quick Qt6::Widgets atlas_core)
+    target_link_libraries(atlas_ui PRIVATE Qt6::Quick Qt6::Widgets Qt6::Network atlas_core)
 endif()
