@@ -19,6 +19,15 @@ namespace fs = std::filesystem;
 
 namespace atlas::wake {
 
+namespace {
+/// Minimum age of a file before it is considered stable and safe to load.
+/// Files modified more recently than this may still be in the process of
+/// being written (e.g. a drag-and-drop copy).  Two seconds is long enough
+/// to cover typical file-system flush/sync delays while being short enough
+/// that newly dropped models appear promptly.
+constexpr int kFileStabilityThresholdSec = 2;
+} // namespace
+
 // ---------------------------------------------------------------------------
 // Construction / destruction
 // ---------------------------------------------------------------------------
@@ -87,14 +96,14 @@ bool ModelManager::isFileStable(const std::string& path) {
             return false;
         }
 
-        // If the file was modified in the last 2 seconds it may still be
-        // in the process of being written — skip it for now and pick it up
-        // on the next refresh cycle.
+        // If the file was modified very recently it may still be in the
+        // process of being written — skip it and pick it up on the next
+        // refresh cycle.
         const auto lastWrite = fs::last_write_time(path);
         const auto now = fs::file_time_type::clock::now();
         const auto age = std::chrono::duration_cast<std::chrono::seconds>(
             now - lastWrite);
-        if (age.count() < 2) {
+        if (age.count() < kFileStabilityThresholdSec) {
             return false;
         }
 

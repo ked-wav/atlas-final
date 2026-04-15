@@ -137,7 +137,7 @@ inference is a no-op. To enable real inference:
 
 ```bash
 # Download ONNX Runtime for your platform, then:
-cmake -S . -B build -DONNXRUNTIME_ROOT=/path/to/onnxruntime-linux-x64-1.17.0
+cmake -S . -B build -DONNXRUNTIME_ROOT=/path/to/onnxruntime-linux-x64-<version>
 cmake --build build
 ```
 
