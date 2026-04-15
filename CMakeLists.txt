@@ -117,5 +117,6 @@ if(BUILD_QT_UI)
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/ui
     )
+    target_compile_definitions(atlas_ui PRIVATE BUILD_QT_WIDGETS_UI=1)
     target_link_libraries(atlas_ui PRIVATE Qt6::Quick Qt6::Widgets atlas_core)
 endif()

@@ -143,6 +143,19 @@ void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
     }
 }
 
+void MainWindow::dragLeaveEvent(QDragLeaveEvent* /*event*/) {
+    // Restore normal drop hint styling when the drag leaves the window.
+    dropHint_->setStyleSheet(
+        "QLabel {"
+        "  background-color: #1E1E2E;"
+        "  color: #A9DFBF;"
+        "  font-size: 16px;"
+        "  padding: 24px;"
+        "  border: 2px dashed #58D68D;"
+        "  border-radius: 8px;"
+        "}");
+}
+
 void MainWindow::dragMoveEvent(QDragMoveEvent* event) {
     if (event->mimeData()->hasUrls()) {
         event->acceptProposedAction();
