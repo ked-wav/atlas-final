@@ -34,7 +34,7 @@ class WakeWordManager {
 public:
     /// Construct the manager.
     /// \p modelsDir  Directory to scan for .onnx models on startup.
-    explicit WakeWordManager(const std::string& modelsDir = "./models");
+    explicit WakeWordManager(const std::string& modelsDir = "./models/wakewords");
 
     ~WakeWordManager();
 

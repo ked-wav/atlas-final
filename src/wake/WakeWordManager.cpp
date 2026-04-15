@@ -63,6 +63,9 @@ void WakeWordManager::start() {
     std::cout << "[WakeWordManager] " << loaded << " model(s) loaded from "
               << modelManager_.modelsDirectory() << '\n';
 
+    // Start background polling for new models.
+    modelManager_.startWatching(5);
+
     // Start microphone capture.
     micStream_.start();
 
@@ -75,6 +78,7 @@ void WakeWordManager::stop() {
         return;
     }
 
+    modelManager_.stopWatching();
     micStream_.stop();
     running_.store(false);
     std::cout << "[WakeWordManager] Wake word detection stopped\n";
