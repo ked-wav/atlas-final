@@ -10,6 +10,7 @@
 
 #include "MainWindow.h"
 
+#include "AssistantWidget.h"
 #include "wake/ModelManager.h"
 #include "wake/WakeWordEngine.h"
 
@@ -76,6 +77,11 @@ void MainWindow::setupUi() {
     setCentralWidget(central);
 
     auto* layout = new QVBoxLayout(central);
+
+    // Animated assistant circle.
+    assistantWidget_ = new AssistantWidget(central);
+    assistantWidget_->setFixedHeight(240);
+    layout->addWidget(assistantWidget_);
 
     // Drop hint banner.
     dropHint_ = new QLabel(
